@@ -138,6 +138,39 @@ app.post("/signin", async function (req, res) {
 	}
 });
 
+app.put("/forgot", async function (req, res) {
+	try {
+		let client = await mongoClient.connect(url);
+
+		let db = client.db("pizza");
+
+		let salt = bcryptjs.genSaltSync(10);
+
+		let hash = bcryptjs.hashSync(req.body.pwd, salt);
+
+		req.body.pwd = hash;
+
+		let data = await db
+			.collection("users")
+			.findOneAndUpdate(
+				{ mail: req.body.mail },
+				{ $set: { pwd: req.body.pwd } }
+			);
+
+		await client.close();
+
+		res.json({
+			message: "Password Changed",
+			code: true,
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Something Went Wrong",
+			code: false,
+		});
+	}
+});
+
 app.listen(port, () => {
 	console.log("The Server is Listening in", port);
 });
